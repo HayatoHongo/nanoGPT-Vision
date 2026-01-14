@@ -80,6 +80,8 @@ Publish Fine-Grained token. Mark all checkpoints on Repository.
 
 For early birds who try SSH for the first time, this might be the biggest challenge.
 
+Make sure you select Ubuntu 22.04.
+
 [~ 9:30 Hands On Video on how to use Lambda Cloud SSH](https://youtu.be/qkS_Zc6uvbo?si=JWKHgWKlX4_Qw2Vk)
 
 - Just watch the first 10 minutes, the later part is about nanoGPT, not this one. (But nanoGPT is also great!)
@@ -124,7 +126,7 @@ Replace YOURFILESYSTEM
 
 train
 ```bash
-torchrun --standalone --nproc_per_node=1 main.py
+torchrun --standalone --nproc_per_node=8 main.py
 ```
 
 Upload to HuggingFace
