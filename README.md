@@ -242,15 +242,15 @@ We excluded these techniques as uncritical
 - GQA: It does not only help training speed but also increase loss. KV cache matters for >10k tokens inference. It is not considered.
 - MLA (in DeepSeek-V3): It does not help training speed. Even during inference, it is incompatible with SDPA. KV cache matters for >10k tokens inference. It is not considered.
 
-[Minmind](https://github.com/jingyaogong/minimind) provided on/off switch for those techniques, which greatly helped me to understand the diferrences.
+[Minimind](https://github.com/jingyaogong/minimind) provided on/off switch for those techniques, which greatly helped me to understand the diferrences.
 
 
 ## Acknowledgements
 
-- Andrej Karpathy — nanoGPT, nanoChat(for streaming inference) and its philosophy
+- Andrej Karpathy — nanoGPT, nanoChat(for streaming inference) and its philosophy https://github.com/karpathy/nanoGPT
 - OpenAI — CLIP
-- Haotian Liu - LLaVA
-- Sebastian Raschka - LLM SFT 
+- Haotian Liu - LLaVA https://github.com/haotian-liu/LLaVA
+- Sebastian Raschka - LLM SFT https://github.com/rasbt/LLMs-from-scratch 
 - HuggingFace Team - FineWeb-Edu Dataset
 - ShallowU - FineWeb-Edu npy dataset
 - jingyaogong - Minimind project https://github.com/jingyaogong/minimind
