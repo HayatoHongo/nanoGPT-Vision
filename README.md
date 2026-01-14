@@ -14,8 +14,9 @@ featuring a **GPT-style text decoder trained fully from scratch**.
 The project is heavily inspired by **Andrej Karpathy’s nanoGPT** and follows the same philosophy:
 > understand the system by building it yourself.
 
-A pretrained **CLIP vision encoder** is used for visual representations,  
-while **all language modeling and vision–language training code is written and trained from scratch**.
+A pretrained **CLIP vision encoder** is used for visual representations (Sorry😉),  
+while **all language modeling and vision–language training code is written, data is public, and trained from scratch**.
+
 
 ---
 
@@ -28,14 +29,13 @@ Most open VLMs reuse large pretrained language models (LLaMA, Vicuna, etc.).
 Instead, it focuses on:
 - training the **text decoder from scratch**
 - keeping the architecture minimal and readable
-- making all design choices explicit
+- making the design choices explicit
 - showing how far you can go on a small, transparent budget
 
-To the best of our knowledge, this is **one of the first publicly released**
-*nanoGPT-style* Vision-Language Models that combines:
-- a **from-scratch language model**
-- a pretrained vision encoder
-- a fully open, minimal training pipeline
+Alghough the CLIP encoder is external, to the best of our knowledge, 
+this is the first publicly released publicly to build vision language model from scratch,
+LLM and vision projector.
+
 
 ---
 
@@ -51,19 +51,26 @@ This is a **work-in-progress research and learning project**.
 
 All numbers below are **actual runs**, not estimates.
 
-### 1. Text decoder pretraining (from scratch)
+# How to build your own Vision Language Model
+
 - Model: GPT-style language model
 - Hardware: **Lambda Cloud A100 × 8**
 - Time: **~6 hours**
 - Cost: **~$90**
 
+
+
 ---
 
-### 2. Vision-language SFT
+### 2. Language SFT
 - Vision encoder: **OpenAI CLIP**
 - Hardware: **Google Colab Pro – A100 (high memory)**
 - Time: **~5 hours**
 - Cost: **~$4**
+
+Available on Colab!
+
+https://colab.research.google.com/drive/1CvgpTAJzpsZjraCSxJ8phYyAmSMw-LwJ?usp=sharing
 
 ---
 
@@ -71,6 +78,12 @@ All numbers below are **actual runs**, not estimates.
 - Hardware: **Google Colab Pro – A100 (high memory)**
 - Time: **~3 hours**
 - Cost: **~$2**
+
+
+
+### 4.  Vision pretraining (for the Vision Pretrained model)
+
+Still under construction! please wait! we will release in January!
 
 ---
 
