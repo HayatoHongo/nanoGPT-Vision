@@ -4,7 +4,7 @@
 
 ![app_chat.png](app_chat.png)
 
-## [Link to WebUI](https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Pretrained)
+## [▶️ Link to WebUI](https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Pretrained)
 
 ⚠️ **Status: actively being cleaned up and documented.**
 The core ideas and training runs are real and reproducible,  
@@ -63,6 +63,88 @@ All numbers below are **actual runs**, not estimates.
 - Hardware: **Lambda Cloud A100 × 8**
 - Time: **~6 hours**
 - Cost: **~$90**
+
+#### Create HuggingFace Account
+
+[44:18 ~ 46:18 Hands On Video on how to create HuggingFace account](https://youtu.be/qkS_Zc6uvbo?si=JWKHgWKlX4_Qw2Vk)
+
+Create Access Tokens
+
+https://huggingface.co/settings/tokens
+
+Publish Fine-Grained token. Mark all checkpoints on Repository.
+
+#### Use Lambda Cloud
+
+[Lambda Cloud](https://cloud.lambda.ai/instances)
+
+For early birds who try SSH for the first time, this might be the biggest challenge.
+
+[~ 9:30 Hands On Video on how to use Lambda Cloud SSH](https://youtu.be/qkS_Zc6uvbo?si=JWKHgWKlX4_Qw2Vk)
+
+- Just watch the first 10 minutes, the later part is about nanoGPT, not this one. (But nanoGPT is also great!)
+
+```bash
+git clone https://github.com/HayatoHongo/nanoGPTVision.git
+cd nanoGPTVision
+```
+
+```bash
+sudo apt update
+sudo apt install -y git git-lfs
+git lfs install
+pip install -U huggingface_hub
+```
+
+```bash
+pip install torch numpy datasets tiktoken
+```
+
+```bash
+pip install huggingface_hub
+```
+
+Replace YOURFILESYSTEM.
+
+```bash
+python3 - << 'EOF'
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="ShallowU/FineWeb-Edu-10B-Tokens-NPY",
+    repo_type="dataset",
+    local_dir="/home/ubuntu/YOURFILESYSTEM",
+    local_dir_use_symlinks=False,
+)
+EOF
+```
+
+@main.py
+Replace YOURFILESYSTEM
+
+train
+```bash
+torchrun --standalone --nproc_per_node=1 main.py
+```
+
+Upload to HuggingFace
+
+```bash
+export HF_TOKEN="hf_xxx.....xx"
+```
+
+```bash
+echo $HF_TOKEN
+```
+
+@upload.py
+Replace YOURNAME, YOUREPO, YOURFILESYSTEM
+
+You don't need to make repository in advance.
+
+```bash
+python upload.py
+```
 
 ## WebUI
 
@@ -137,13 +219,39 @@ Still under construction! please wait! we will release in January!
 - [ ] Code cleanup & documentation (in progress)
 - [ ] Build Clip from scratch
 
+
+## What we did not include in model.py 
+
+Recently there are so many techniques to boost LLM training that we don't know which is critical.
+
+I removed uncritical techniques  and only critical technique remaned.
+
+We included 
+
+- RoPE: Traditional RPE(like RPE in T5) worked slighty worse than RoPE in my own prior experiments with smaller model. But the biggest problem about RPE is that it is incompatible with Scaled Dot Product Attention.
+- Scaled Dot Product Attention (Flash Attention): 😉 Sorry I don't understand the inner machanism of that. But it does not meddle in model, just increase training speed significantly and purely.
+
+
+We excluded these techniques as uncritical
+
+- RMSNorm: normal LayerNorm is enough.
+- SwiGLU(and GeLU): normal ReLU is enough.
+- Vocab tying: uncritical
+- GQA: It does not only help training speed but also increase loss. KV cache matters for >10k tokens inference. It is not considered.
+- MLA (in DeepSeek-V3): It does not help training speed. Even during inference, it is incompatible with SDPA. KV cache matters for >10k tokens inference. It is not considered.
+
+[Minmind](https://github.com/jingyaogong/minimind) provided on/off switch for those techniques, which greatly helped me to understand the diferrences.
+
+
 ## Acknowledgements
 
-- Andrej Karpathy — nanoGPT, nanoChat(for streaming) and its philosophy
+- Andrej Karpathy — nanoGPT, nanoChat(for streaming inference) and its philosophy
 - OpenAI — CLIP
 - Haotian Liu - LLaVA
 - Sebastian Raschka - LLM SFT 
-
+- HuggingFace Team - FineWeb-Edu Dataset
+- ShallowU - FineWeb-Edu npy dataset
+- jingyaogong - Minimind project https://github.com/jingyaogong/minimind
 
 This repository is provided for research and educational purposes.
 Expect rough edges, missing pieces, and ongoing refactors.
