@@ -37,22 +37,12 @@ this is the first educational project to pretrain both text decoder and vision p
 
 ---
 
-## Project philosophy
-
-This is **not a polished product**.
-
-This is a **work-in-progress research and learning project**.
-
----
-
-## Training setup & cost breakdown
-
-All numbers below are **actual runs**, not estimates.
-
-# How to build your own Vision Language Model
+## Anyway, what is nanoGPT?
 
 
 If you have not implemented nanoGPT yet, Learn on Colab!
+
+**Free T4 GPU on colab!😊**
 
 [Everyones_nanoGPT](https://github.com/HayatoHongo/Everyones_nanoGPT/tree/main)
 
@@ -74,10 +64,6 @@ If you have not implemented nanoGPT yet, Learn on Colab!
 
 Sorry the following is in Japanes. Translation is undergoing!
 
-### nanoGPTをさらに発展させてllama3.2を目指す
-
-**Free T4 GPU on colab!😊**
-
 | チャプター  | 推定所要時間 | ノートブック  |
 |---|---|---|
 | Chapter 13: Tokens per second(CPU)    | 1~2時間 | [![Colabで開く](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/HayatoHongo/Everyones_nanoGPT/blob/ja/notebooks/todo/Everyones_nanoGPT_colab_Chapter13_todo_ja.ipynb) |          |
@@ -94,6 +80,18 @@ Sorry the following is in Japanes. Translation is undergoing!
 | Chapter 23: RPE(OverSimplified) | 2~3時間   | [![Colabで開く](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/HayatoHongo/Everyones_nanoGPT/blob/ja/notebooks/todo/Everyones_nanoGPT_colab_Chapter23_todo_ja.ipynb) |          |
 | Chapter 24: RPE(Simplified)        | 1〜2時間 (+ モデル学習 1時間)      | [![Colabで開く](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/HayatoHongo/Everyones_nanoGPT/blob/ja/notebooks/todo/Everyones_nanoGPT_colab_Chapter24_todo_ja.ipynb) |
 
+
+Waiting List
+
+RoPE, SDPA, LR Schedule, Checkpoint. 
+
+---
+
+## Training setup & cost breakdown
+
+All numbers below are **actual runs**, not estimates.
+
+# How to build your own Vision Language Model
 
 ### 1. Language Pretraining
 
