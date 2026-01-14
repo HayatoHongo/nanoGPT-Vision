@@ -2,9 +2,9 @@
 
 > ChatGPT4o–like Vision AI that $100 can buy.
 
-## [Link to WebUI](https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Pretrained)
-
 ![app_chat.png](app_chat.png)
+
+## [Link to WebUI](https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Pretrained)
 
 ⚠️ **Status: actively being cleaned up and documented.**
 The core ideas and training runs are real and reproducible,  
