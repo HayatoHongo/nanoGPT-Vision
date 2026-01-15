@@ -273,7 +273,7 @@ We excluded these techniques as uncritical
 - RMSNorm: normal LayerNorm is enough.
 - SwiGLU(and GeLU): normal ReLU is enough.
 - Vocab tying: uncritical
-- GQA: It does not only help training speed. Moreover it also increase loss. KV cache matters for >10k tokens inference, which is not the case for this project.
+- GQA: It does not help training speed. Moreover it also increase loss. KV cache matters for >10k tokens inference, which is not the case for this project.
 - MLA (in DeepSeek-V3): It does not help training speed. Even during inference, it is incompatible with SDPA. KV cache matters for >10k tokens inference, which is not the case for this project.
 
 [Minimind](https://github.com/jingyaogong/minimind) provided on/off switch for those techniques, which greatly helped me to understand the diferrences.
