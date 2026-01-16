@@ -281,12 +281,18 @@ We excluded these techniques as uncritical
 
 ## Acknowledgements
 
+# Dataset
+- HuggingFace Team - FineWeb-Edu Dataset
+- ShallowU - FineWeb-Edu Dataset in numpy format
+- Haotian Liu - LLaVA Pretrain Dataset (whitelisted version was used) https://huggingface.co/datasets/HayatoHongo/LLaVA-CC3M-Pretrain-521K
+- Magpie Team - https://huggingface.co/datasets/Magpie-Align/Magpie-Phi3-Pro-1M-v0.1
+- roneneldan - https://huggingface.co/datasets/roneneldan/TinyStories
+
+# Code
 - Andrej Karpathy — nanoGPT, nanoChat(for streaming inference) and its philosophy https://github.com/karpathy/nanoGPT
-- OpenAI — CLIP
+- OpenAI — CLIP - https://huggingface.co/openai/clip-vit-large-patch14
 - Haotian Liu - LLaVA https://github.com/haotian-liu/LLaVA
 - Sebastian Raschka - LLM SFT https://github.com/rasbt/LLMs-from-scratch 
-- HuggingFace Team - FineWeb-Edu Dataset
-- ShallowU - FineWeb-Edu npy dataset
 - jingyaogong - Minimind project https://github.com/jingyaogong/minimind
 
 This repository is provided for research and educational purposes.
