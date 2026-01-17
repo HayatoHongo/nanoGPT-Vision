@@ -2,7 +2,8 @@
 
 > ChatGPT4o–like Vision AI that $100 can buy.
 
-![app_chat.png](app_chat.png)
+![Demo](assets/demo.gif)
+
 
 ## [▶️ Link to WebUI](https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Pretrained)
 
@@ -234,9 +235,25 @@ https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Pretrai
 
 
 ### 4.  Vision Instruction Tuning (for the Vision Pretrained model)
+- Hardware: **Google Colab Pro – A100 (high memory)**
+- Time: **~2 hours**
+- Cost: **~$1~2**
 
-Still under construction! please wait! we will release in January!
+Available on Colab!
 
+https://colab.research.google.com/drive/1FTstgyIWpi-VY0Slylcj4s_Bivojo6xF?usp=sharing
+
+#### Inference
+
+Available on Colab!
+
+https://colab.research.google.com/drive/13no1R7vexor0UJSp_Wr6eB0xKZBDOOxY?usp=sharing
+
+#### Web UI
+
+Please clone this huggingface space and replace the model checkpoint with your one.
+
+https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Instruct
 
 
 ---
@@ -285,6 +302,7 @@ We excluded these techniques as uncritical
 - HuggingFace Team - FineWeb-Edu Dataset https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu
 - ShallowU - FineWeb-Edu Dataset in numpy format https://huggingface.co/datasets/ShallowU/FineWeb-Edu-10B-Tokens-NPY
 - Haotian Liu - LLaVA Pretrain Dataset (whitelisted version was used) https://huggingface.co/datasets/HayatoHongo/LLaVA-CC3M-Pretrain-521K
+- Haotian Liu - LLaVA Instruction Dataset https://huggingface.co/datasets/HayatoHongo/LLaVA-Instruct-150K/tree/main
 - Magpie Team - https://huggingface.co/datasets/Magpie-Align/Magpie-Phi3-Pro-1M-v0.1
 - roneneldan - https://huggingface.co/datasets/roneneldan/TinyStories
 
