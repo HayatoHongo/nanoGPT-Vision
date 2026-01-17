@@ -259,7 +259,7 @@ https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Instruc
 ---
 
 ### 💰 Total cost
-**≈ $96 USD**
+**≈ $97~98 USD**
 
 ---
 
