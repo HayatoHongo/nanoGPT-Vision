@@ -13,11 +13,7 @@ The core ideas and training runs are real and reproducible, but parts of the cod
 ---
 
 `nanoGPTVision` is a **minimal Vision-Language Model built end-to-end**,  
-featuring a **GPT-style text decoder and vision projector trained fully from scratch**.
-
-A pretrained **CLIP vision encoder** is used for visual representations (Sorry😉),  
-while **all language modeling and vision–language training code is written, data is public, and trained from scratch**.
-
+featuring a **GPT-style text decoder and vision projector trained fully from scratch**.  
 This project is heavily inspired by [nanoGPT](https://github.com/karpathy/nanoGPT.git) and [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch.git). If you haven't checked them yet, please visit!
 
 ---
@@ -34,7 +30,7 @@ Instead, it focuses on:
 - making the design choices explicit
 - showing how far you can go on a small, transparent budget
 
-Alghough the CLIP encoder is external, to the best of our knowledge, 
+Alghough the CLIP encoder is external(Sorry😉), to the best of our knowledge, 
 this is the first educational project to pretrain and finetune both text decoder and vision projector from scratch.
 
 ---
