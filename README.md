@@ -18,6 +18,8 @@ featuring a **GPT-style text decoder trained fully from scratch**.
 
 A pretrained **CLIP vision encoder** is used for visual representations (Sorry😉),  
 while **all language modeling and vision–language training code is written, data is public, and trained from scratch**.
+This project is heavily inspired by [nanoGPT](https://github.com/karpathy/nanoGPT.git) and [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch.git)
+If you have not checked them yet, please visit them!
 
 ---
 
@@ -34,7 +36,7 @@ Instead, it focuses on:
 - showing how far you can go on a small, transparent budget
 
 Alghough the CLIP encoder is external, to the best of our knowledge, 
-this is the first educational project to pretrain both text decoder and vision projector from scratch.
+this is the first educational project to pretrain and finetune both text decoder and vision projector from scratch.
 
 ---
 
