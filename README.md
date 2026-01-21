@@ -13,8 +13,8 @@ The core ideas and training runs are real and reproducible, but parts of the cod
 ---
 
 `nanoGPTVision` is a **minimal Vision-Language Model built end-to-end**,  
-featuring a **GPT-style text decoder and vision projector trained fully from scratch**.  
-This project is heavily inspired by [nanoGPT](https://github.com/karpathy/nanoGPT.git) and [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch.git). If you haven't checked them yet, please visit!
+featuring a **GPT-style text decoder and LLaVA-style vision projector trained fully from scratch**.  
+This project is inspired by [nanoGPT](https://github.com/karpathy/nanoGPT.git) and [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch.git). If you haven't checked them yet, please visit!
 
 ---
 
