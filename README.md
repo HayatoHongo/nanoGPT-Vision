@@ -8,18 +8,17 @@
 ## [▶️ Link to WebUI](https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_Vision_Instruct)
 
 ⚠️ **Status: actively being cleaned up and documented.**
-The core ideas and training runs are real and reproducible,  
-but parts of the codebase and README are still under active refinement.
+The core ideas and training runs are real and reproducible, but parts of the codebase and README are still under active refinement.
 
 ---
 
 `nanoGPTVision` is a **minimal Vision-Language Model built end-to-end**,  
-featuring a **GPT-style text decoder trained fully from scratch**.
+featuring a **GPT-style text decoder and vision projector trained fully from scratch**.
 
 A pretrained **CLIP vision encoder** is used for visual representations (Sorry😉),  
 while **all language modeling and vision–language training code is written, data is public, and trained from scratch**.
-This project is heavily inspired by [nanoGPT](https://github.com/karpathy/nanoGPT.git) and [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch.git)
-If you have not checked them yet, please visit them!
+
+This project is heavily inspired by [nanoGPT](https://github.com/karpathy/nanoGPT.git) and [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch.git). If you haven't checked them yet, please visit!
 
 ---
 
