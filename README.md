@@ -132,10 +132,12 @@ pip install -U huggingface_hub
 ```
 
 ```bash
-pip install torch numpy datasets tiktoken
+pip install torch numpy
 ```
 
-Replace YOURFILESYSTEM.
+
+### ⚠️ Replace YOURFILESYSTEM.
+
 
 ```bash
 python3 - << 'EOF'
@@ -150,12 +152,11 @@ snapshot_download(
 EOF
 ```
 
-@main.py
-Replace YOURFILESYSTEM
+### ⚠️ Replace YOURFILESYSTEM in main.py
 
-train
+
 ```bash
-torchrun --standalone --nproc_per_node=8 main.py
+python main.py
 ```
 
 Upload to HuggingFace
