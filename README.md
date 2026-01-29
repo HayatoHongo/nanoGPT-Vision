@@ -217,8 +217,6 @@ https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_SFT_magpie
 
 Paper: [Magpie: Alignment data synthesis from scratch by prompting aligned LLMs with nothing.](https://arxiv.org/abs/2406.08464)
 
-Xu, Z., Jiang, F., Niu, L., Deng, Y., Poovendran, R., Choi, Y., & Lin, B. Y. (2024). Magpie: Alignment data synthesis from scratch by prompting aligned LLMs with nothing. arXiv. arXiv:2406.08464. https://doi.org/10.48550/arXiv.2406.08464
-
 ---
 
 ### 3. Vision pretraining (for the SFT model)
@@ -323,6 +321,11 @@ We excluded these techniques as uncritical
 - Haotian Liu - LLaVA https://github.com/haotian-liu/LLaVA
 - Sebastian Raschka - LLM SFT https://github.com/rasbt/LLMs-from-scratch 
 - jingyaogong - Minimind project https://github.com/jingyaogong/minimind
+
+# Paper
+
+Xu, Z., Jiang, F., Niu, L., Deng, Y., Poovendran, R., Choi, Y., & Lin, B. Y. (2024). Magpie: Alignment data synthesis from scratch by prompting aligned LLMs with nothing. arXiv. arXiv:2406.08464. https://doi.org/10.48550/arXiv.2406.08464
+
 
 This repository is provided for research and educational purposes.
 Expect rough edges, missing pieces, and ongoing refactors.
