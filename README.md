@@ -205,6 +205,20 @@ Please clone this huggingface space and replace the model with your one.
 
 https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_SFT
 
+### FOR ENTHUSIASTS: MAGPIE Simplified
+
+In app.py, just remove <assistant> and prompt from prompt format, leaving only <user>\n behind. <br>
+No prompt. Just send nothing on Chat interface, then the model receives <user>\n. <br>
+Surpisingly, the model can predict user prompt!<br>
+As you know, in SFT stage, we masked <user>\n and prompt.<br>
+Very interesting.
+
+https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_SFT_magpie
+
+Paper: [Magpie: Alignment data synthesis from scratch by prompting aligned LLMs with nothing.](https://arxiv.org/abs/2406.08464)
+
+Xu, Z., Jiang, F., Niu, L., Deng, Y., Poovendran, R., Choi, Y., & Lin, B. Y. (2024). Magpie: Alignment data synthesis from scratch by prompting aligned LLMs with nothing. arXiv. arXiv:2406.08464. https://doi.org/10.48550/arXiv.2406.08464
+
 ---
 
 ### 3. Vision pretraining (for the SFT model)
