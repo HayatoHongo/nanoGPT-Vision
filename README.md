@@ -207,10 +207,10 @@ https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_SFT
 
 ### FOR ENTHUSIASTS: MAGPIE Simplified
 
-In app.py, just remove <assistant> and prompt from prompt format, leaving only <user>\n behind. <br>
-No prompt. Just send nothing on Chat interface, then the model receives <user>\n. <br>
+In app.py, just remove `<assistant>` and prompt from prompt format, leaving only `<user>\n` behind. <br>
+No prompt. Just send nothing on Chat interface, then the model receives `<user>\n`. <br>
 Surpisingly, the model can predict user prompt!<br>
-As you know, in SFT stage, we masked <user>\n and prompt.<br>
+As you know, in SFT stage, we masked `<user>\n` and prompt.<br>
 Very interesting.
 
 https://huggingface.co/spaces/HayatoHongoEveryonesAI/EveryonesGPT_SFT_magpie
