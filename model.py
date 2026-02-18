@@ -8,388 +8,239 @@
 # KV cache supports multi-turn continuation by RoPE with position offset.
 # No Dropout. Dataset is large enough and regularization is not necessary.
 
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 class TokenEmbedding(nn.Module):
-    def __init__(self, config):
+    def __init__(self, vocab_size, embedding_dim):
         super().__init__()
-        self.token_embedding_table = nn.Embedding(config.vocab_size, config.embedding_dim)
-        # keep embedding in default dtype (autocast will handle bf16 when enabled)
+        # 語彙数x埋め込み次元の埋め込みテーブルを定義する
+        self.token_embedding_table = nn.Embedding(vocab_size, embedding_dim)
 
-    def forward(self, input_indices):
-        return self.token_embedding_table(input_indices)
+    def embed(self, input_indices):
+        # 入力インデックスに対応する埋め込みベクトルを取得する
+        return self.token_embedding_table.forward(input_indices)
 
 
-class RotaryEmbedding(nn.Module):
-    def __init__(self, dim, max_seq_len=2048, rope_theta=1e6):
+class RelativePositionEmbedding(nn.Module):
+    def __init__(self, num_relative_positions: int):
         super().__init__()
+        ############ NEW ############
+        self.num_relative_positions = num_relative_positions  # TODO: FILL
+        self.bias_embedding_table = nn.Embedding(self.num_relative_positions, 1)  # TODO: FILL
+        ############ NEW ############
 
-        inv_freq = 1.0 / (rope_theta ** (torch.arange(0, dim, 2) / dim))
-        position_index = torch.arange(max_seq_len)
-        frequency_matrix = torch.einsum('i,j->ij', position_index, inv_freq)
+    def forward(self, query_len, key_len, device_type=None):
+        query_positions = torch.arange(query_len, device=device_type)[:, None]  # (query_len, 1)
+        key_positions = torch.arange(key_len, device=device_type)[None, :]      # (1, key_len)
+        relative_position_matrix = query_positions - key_positions # key_positions - query_positions
 
-        cosine = torch.cos(frequency_matrix)[None, None, :, :]
-        sine = torch.sin(frequency_matrix)[None, None, :, :]
+        ############ NEW ############
+        # 相対距離を範囲 [0, max_distance - 1] に収める（負の距離や過大距離を切り詰め）
+        # (query_len, key_len)
+        clamped_relative_position_matrix = relative_position_matrix.clamp(
+            min=0, max=self.num_relative_positions - 1 # TODO: FILL
+        )  
 
-        self.register_buffer("cos_cached", cosine, persistent=False)
-        self.register_buffer("sin_cached", sine, persistent=False)
+        # 埋め込み層から対応するバイアスベクトルを取得
+        # (query_len, key_len, 1)
+        relative_position_bias_embeddings = self.bias_embedding_table(clamped_relative_position_matrix) # TODO: FILL
 
-    def apply_rotary_emb(self, x, position_offset=0):
-        sequence_length = x.size(2)
+        # 最後の次元を除去して行列化
+        # (query_len, key_len)
+        relative_position_bias_matrix = relative_position_bias_embeddings.squeeze(-1)  # TODO: FILL
+        ############ NEW ############
 
-        cosine = self.cos_cached[:, :, position_offset:position_offset + sequence_length, :]
-        sine = self.sin_cached[:, :, position_offset:position_offset + sequence_length, :]
+        return relative_position_bias_matrix
 
-        x_even = x[..., 0::2]
-        x_odd = x[..., 1::2]
 
-        rotated_even = x_even * cosine - x_odd * sine
-        rotated_odd = x_odd * cosine + x_even * sine
+class AttentionHead(nn.Module):
+    def __init__(self, head_size, config):
+        super().__init__()
+        self.key_fc= nn.Linear(config.embedding_dim, head_size, bias=False)
+        self.query_fc = nn.Linear(config.embedding_dim, head_size, bias=False)
+        self.value_fc = nn.Linear(config.embedding_dim, head_size, bias=False)
 
-        rotated = torch.empty_like(x)
-        rotated[..., 0::2] = rotated_even
-        rotated[..., 1::2] = rotated_odd
+        # ドロップアウト
+        self.dropout = nn.Dropout(config.dropout_rate)
+        self.head_size = head_size
 
-        return rotated
+        ########## NEW ##########
+        self.relative_position_embedding_layer = RelativePositionEmbedding(num_relative_positions=config.num_relative_positions)
+        ########## NEW ##########
+
+    def forward(self, input_tensor):
+        B, T, C = input_tensor.shape  # バッチ、トークン長、埋め込みチャネル
+
+        Key = self.key_fc.forward(input_tensor)     # (B, T, head_size)
+        Query = self.query_fc.forward(input_tensor)   # (B, T, head_size)
+        Value = self.value_fc.forward(input_tensor)   # (B, T, head_size)
+
+        # Attentionスコアを計算中 (QK^T) / sqrt(embedding_dim)
+        attention_weights_before_mask = Query @ Key.transpose(-2, -1) * self.head_size**(-0.5)
+
+        # 相対位置バイアスの補正項を計算する
+        relative_position_bias_matrix = self.relative_position_embedding_layer(T, T, device_type=input_tensor.device)
+
+        # 相対位置バイアスの補正項を加算する
+        attention_weights_before_mask = attention_weights_before_mask + relative_position_bias_matrix
+
+        # マスク適用済み
+        mask = torch.triu(torch.ones(T, T), diagonal=1).to(input_tensor.device)
+        masked_attention_weights = attention_weights_before_mask.masked_fill(mask == 1, float('-inf'))
+
+        # ソフトマックス → ドロップアウト → 重み付き和
+        attention_weights = F.softmax(masked_attention_weights, dim=-1)
+        attention_weights = self.dropout(attention_weights)
+
+        out = attention_weights @ Value  # (B, T, head_size)
+        return out
+ 
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.num_heads = config.num_attention_heads
-        self.embed_dim = config.embedding_dim
-        self.head_dim = self.embed_dim // self.num_heads
+        self.num_attention_heads = config.num_attention_heads
+        self.embedding_dim = config.embedding_dim
+        self.head_size = int(self.embedding_dim / self.num_attention_heads)
 
-        # QKV projection
-        self.query_fc = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.key_fc   = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.value_fc = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
+        # ModuleListで複数のヘッドを管理する
+        self.attention_heads = nn.ModuleList([
+            AttentionHead(self.head_size, config)
+            for _ in range(self.num_attention_heads)
+        ])
 
-        # Rotary Positional Embedding (RoPE)
-        self.rotary_emb = RotaryEmbedding(
-            dim=self.head_dim,
-            max_seq_len=config.max_sequence_length,
-            rope_theta=config.rope_theta
-        )
+        # 各ヘッドの出力を混合する線形層
+        self.output_projection = nn.Linear(self.embedding_dim, self.embedding_dim)
 
-        self.output_projection = nn.Linear(self.embed_dim, self.embed_dim)
+        # 出力のドロップアウト
+        self.dropout = nn.Dropout(config.dropout_rate)
 
-        self.register_buffer(
-            "causal_mask",
-            torch.tril(torch.ones(
-                config.max_sequence_length,
-                config.max_sequence_length,
-                dtype=torch.bool
-            )),
-            persistent=False
-        )
+    def forward(self, input_tensor):
+        # 各ヘッドの出力を取得する
+        # (B, T, head_size)のリスト
+        head_outputs_list = [head.forward(input_tensor) for head in self.attention_heads]
 
-        # KV cache
-        self.register_buffer("cache_k", None, persistent=False)
-        self.register_buffer("cache_v", None, persistent=False)
-        self.current_pos = 0
+        # 全てのヘッドの出力を連結 → (B, T, embedding_dim)
+        concatenated = torch.cat(head_outputs_list, dim=-1)
 
-    # --------------------------------------------------
-    # router
-    # --------------------------------------------------
-    def forward(self, x, use_cache=False):
-        input_len = x.size(1)
-        if use_cache is False:
-            return self.forward_no_cache(x)
-        elif use_cache is True and input_len > 1:
-            return self.forward_prefill(x)
-        elif use_cache is True and input_len == 1: # Hi scenario also starts with T==1
-            return self.forward_cached_decoding(x)
-        else:
-            raise RuntimeError("Unexpected condition in MultiHeadAttention forward")
+        # 線形変換での出力混合
+        projected = self.output_projection.forward(concatenated)
 
-    # --------------------------------------------------
-    # (1) no cache : training 
-    # --------------------------------------------------
-    def forward_no_cache(self, x):
-        B, T, C = x.shape
+        # 最終出力にドロップアウトを適用する
+        output = self.dropout.forward(projected)
 
-        Q = self.query_fc(x)
-        K = self.key_fc(x)
-        V = self.value_fc(x)
-
-        Q = Q.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-        K = K.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-        V = V.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-
-        # RoPE : offset = 0
-        Q = self.rotary_emb.apply_rotary_emb(Q, position_offset=0)
-        K = self.rotary_emb.apply_rotary_emb(K, position_offset=0)
-
-        out = F.scaled_dot_product_attention(
-            Q, K, V,
-            attn_mask=None,
-            is_causal=True
-        )
-
-        out = out.transpose(1, 2).contiguous().view(B, T, C)
-        out = self.output_projection(out)
-        return out
-
-    # --------------------------------------------------
-    # (2) prefill : initialize KV cache
-    # --------------------------------------------------
-    def forward_prefill(self, x):
-        B, T, C = x.shape
-
-        Q = self.query_fc(x)
-        K = self.key_fc(x)
-        V = self.value_fc(x)
-
-        Q = Q.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-        K = K.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-        V = V.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-
-        # init cache
-        if self.cache_k is None:
-            self.cache_k = torch.zeros(
-                B, self.num_heads, self.config.max_sequence_length, self.head_dim,
-                device=x.device, dtype=K.dtype
-            )
-            self.cache_v = torch.zeros(
-                B, self.num_heads, self.config.max_sequence_length, self.head_dim,
-                device=x.device, dtype=V.dtype
-            )
-            self.current_pos = 0
-
-        # RoPE : offset = current_pos (supports multi-turn continuation)
-        Q = self.rotary_emb.apply_rotary_emb(Q, position_offset=self.current_pos)
-        K = self.rotary_emb.apply_rotary_emb(K, position_offset=self.current_pos)
-
-        # prevent overflow
-        if self.current_pos + T > self.config.max_sequence_length:
-            raise RuntimeError("KV cache exceeded max_sequence_length")
-
-        self.cache_k[:, :, self.current_pos:self.current_pos + T, :] = K
-        self.cache_v[:, :, self.current_pos:self.current_pos + T, :] = V
-
-        K = self.cache_k[:, :, :self.current_pos + T, :]
-        V = self.cache_v[:, :, :self.current_pos + T, :]
-
-        attn_mask = self.causal_mask[
-            self.current_pos : self.current_pos + T,
-            : self.current_pos + T
-        ]
-
-        out = F.scaled_dot_product_attention(
-            Q, K, V,
-            attn_mask=attn_mask,
-            is_causal=False
-        )
-
-        self.current_pos += T
-
-        out = out.transpose(1, 2).contiguous().view(B, T, C)
-        out = self.output_projection(out)
-        return out
-
-    # --------------------------------------------------
-    # (3) decode : cached decoding (1 token)
-    # --------------------------------------------------
-    def forward_cached_decoding(self, x):
-        B, T, C = x.shape
-        assert T == 1, "cached decoding expects T==1"
-
-        Q = self.query_fc(x)
-        K = self.key_fc(x)
-        V = self.value_fc(x)
-
-        Q = Q.view(B, 1, self.num_heads, self.head_dim).transpose(1, 2)
-        K = K.view(B, 1, self.num_heads, self.head_dim).transpose(1, 2)
-        V = V.view(B, 1, self.num_heads, self.head_dim).transpose(1, 2)
-
-        # This is not usually needed since prefill should have initialized the cache.
-        # Just in case for "Hi" scenario, which starts with single token input.
-        if self.cache_k is None:
-            self.cache_k = torch.zeros(
-                B, self.num_heads, self.config.max_sequence_length, self.head_dim,
-                device=x.device, dtype=K.dtype
-            )
-            self.cache_v = torch.zeros(
-                B, self.num_heads, self.config.max_sequence_length, self.head_dim,
-                device=x.device, dtype=V.dtype
-            )
-            self.current_pos = 0
-
-        if self.current_pos + 1 >= self.config.max_sequence_length:
-            raise RuntimeError("KV cache exceeded max_sequence_length")
-
-        # RoPE : offset = current_pos
-        Q = self.rotary_emb.apply_rotary_emb(Q, position_offset=self.current_pos)
-        K = self.rotary_emb.apply_rotary_emb(K, position_offset=self.current_pos)
-
-        self.cache_k[:, :, self.current_pos:self.current_pos + 1, :] = K
-        self.cache_v[:, :, self.current_pos:self.current_pos + 1, :] = V
-
-        K = self.cache_k[:, :, :self.current_pos + 1, :]
-        V = self.cache_v[:, :, :self.current_pos + 1, :]
-
-        out = F.scaled_dot_product_attention(
-            Q, K, V,
-            attn_mask=None,
-            is_causal=False
-        )
-
-        self.current_pos += 1
-
-        out = out.transpose(1, 2).contiguous().view(B, T, C)
-        out = self.output_projection(out)
-        return out
-
-    def reset_cache(self):
-        self.cache_k = None
-        self.cache_v = None
-        self.current_pos = 0
-
-
+        return output
 
 class FeedForward(nn.Module):
     def __init__(self, config):
-        super().__init__()    
+        super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(config.embedding_dim, config.hidden_dim, bias=False),
+            nn.Linear(config.embedding_dim, config.hidden_dim),
             nn.ReLU(),
-            nn.Linear(config.hidden_dim, config.embedding_dim, bias=False),
+            nn.Linear(config.hidden_dim, config.embedding_dim),
+            nn.Dropout(config.dropout_rate),
         )
 
     def forward(self, input_tensor):
         return self.net(input_tensor)
 
-
 class TransformerBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
+
+        # 各LayerNormは独自のbetaとgammaを保持します。
         self.layer_norm1 = nn.LayerNorm(config.embedding_dim)
         self.layer_norm2 = nn.LayerNorm(config.embedding_dim)
+
         self.multihead_attention = MultiHeadAttention(config=config)
         self.feed_forward = FeedForward(config=config)
 
+    def forward(self, input_tensor):
+        # forwardメソッドは省略されています。
+        normed_input = self.layer_norm1(input_tensor) # 入力にレイヤーノルムを適用する
+        attention_output = self.multihead_attention(normed_input) # マルチヘッドアテンションを適用する
+        residual_attention = attention_output + input_tensor # "before! layernorm1"を追加
+        normed_attention = self.layer_norm2(residual_attention) # 残差出力に再度LayerNormを適用する
+        feedforward_output = self.feed_forward(normed_attention) # フィードフォワードネットワークを適用する
+        final_output = feedforward_output + residual_attention # "before" layernorm2 を追加する！
 
-    def forward(self, input_tensor, use_cache=False):
-        normed_input = self.layer_norm1(input_tensor)
-        attention_output = self.multihead_attention(normed_input, use_cache=use_cache)
-        residual_attention = attention_output + input_tensor
-        normed_attention = self.layer_norm2(residual_attention)
-        feedforward_output = self.feed_forward(normed_attention)
-        final_output = feedforward_output + residual_attention
         return final_output
 
-
 class VocabularyLogits(nn.Module):
-    def __init__(self, config):
+    def __init__(self, vocab_size, config):
         super().__init__()
+        # レイヤー正規化
         self.output_norm = nn.LayerNorm(config.embedding_dim)
-        self.vocab_projection = nn.Linear(config.embedding_dim, config.vocab_size, bias=False)
+        # 語彙数の射影
+        self.vocab_projection = nn.Linear(config.embedding_dim, vocab_size)
 
     def forward(self, transformer_block_output):
-        x = transformer_block_output
-        normalized_output = self.output_norm(x)
-        vocab_logits = self.vocab_projection(normalized_output)
+        # Transformerブロックの出力にLayer normalizationを適用する。
+        normalized_output = self.output_norm.forward(transformer_block_output)  # (B, T, C)
+
+        # 線形層でスコアを語彙数次元に変換する。
+        vocab_logits = self.vocab_projection.forward(normalized_output)  # (B, T, V)
+
         return vocab_logits
 
 
-class GPT(nn.Module):
-    def __init__(self, config):
+class nanoGPT(nn.Module):
+    def __init__(self, vocab_size, config):
         super().__init__()
-        self.config = config
-        self.token_embedding_layer = TokenEmbedding(config=config)
-        self.blocks = nn.ModuleList([TransformerBlock(config=config) for _ in range(config.layer_count)])
-        self.vocab_projection = VocabularyLogits(config=config)
+        self.config = config  # 生成時にも使うので保持してください。
+        self.token_embedding_layer = TokenEmbedding(vocab_size = vocab_size, embedding_dim = config.embedding_dim)
+        self.blocks = nn.Sequential(*[TransformerBlock(config=config) for _ in range(config.layer_count)])
+        self.vocab_projection = VocabularyLogits(vocab_size=vocab_size, config=config)
         self.criterion = nn.CrossEntropyLoss()
 
+    # 尤度と損失を計算する
+    def forward(self, input_indices, target_indices):
+        token_embeddings = self.token_embedding_layer.embed(input_indices)
+        blocks_output = self.blocks(token_embeddings)
+        logits = self.vocab_projection(blocks_output)
 
-    def forward(self, input_indices, target_indices, use_cache=False):
-        token_embeddings = self.token_embedding_layer.forward(input_indices)
-
-        x = token_embeddings
-        for block in self.blocks:
-            x = block(x, use_cache=use_cache)
-        logits = self.vocab_projection(x)
-
+        # 推論時はターゲットがないため、lossはNoneです
+        # —確率（ロジット）のみ返されます。
         if target_indices is None:
             return logits, None
 
         batch_size, token_len, vocab_size = logits.shape
-        logits_flat = logits.view(batch_size * token_len, vocab_size)
-        targets_flat = target_indices.view(batch_size * token_len)
-        loss = self.criterion(logits_flat, targets_flat)
+        logits = logits.view(batch_size * token_len, vocab_size)
+        targets = target_indices.view(batch_size * token_len)
+        loss = self.criterion(logits, targets)
+
         return logits, loss
+    
+    def generate(self, input_indices, max_new_tokens, temperature=1.0):
+        ########## NEW ##########
+        self.eval()  # モデルを評価モードに切り替える
+        ########## NEW ##########
+        # 指定したトークン数max_new_tokensのみ生成する
+        for _ in range(max_new_tokens):
+            input_conditioned = input_indices[:, -self.config.input_sequence_length:] # 入力を切り取る
 
+            # 順伝播は `(likelihood, loss)` を返す—`likelihood` のみを `logits` として保持する。
+            logits, _ = self.forward(input_conditioned, target_indices=None)
+            last_logits = logits[:, -1, :] # 最後のトークンのロジットを抽出する
+            
+            last_logits = last_logits / temperature
+            probs = F.softmax(last_logits, dim=-1) # Softmaxで尤度を確率に変換する
 
-    def generate(self,
-        input_indices,
-        max_new_tokens,
-        temperature=1.0,
-        use_cache=True,
-        reset_cache=False,
-        top_k=None,      # ### NEW ###
-        top_p=None,      # ### NEW ###
-    ):
-        self.eval()
-
-        if reset_cache:
-            for block in self.blocks:
-                block.multihead_attention.reset_cache()
-
-        next_token = None
-
-        for i in range(max_new_tokens):
-            if use_cache:
-                if i == 0:
-                    logits, _ = self.forward(input_indices, None, use_cache=True)
-                else:
-                    logits, _ = self.forward(next_token, None, use_cache=True)
-            else:
-                logits, _ = self.forward(input_indices, None, use_cache=False)
-
-            """ DELETE
-            last_logits = logits[:, -1, :] / temperature
-            probs = F.softmax(last_logits, dim=-1)
+            # 次のトークンをサンプリングする
             next_token = torch.multinomial(probs, num_samples=1)
-            """
 
-            ### NEW ###
-            last_logits = logits[:, -1, :] / temperature
-
-            if top_k is not None:
-                top_k = min(top_k, last_logits.size(-1))
-                values, _ = torch.topk(last_logits, top_k)
-                min_value = values[:, -1].unsqueeze(-1)
-                last_logits = torch.where(
-                    last_logits < min_value,
-                    torch.full_like(last_logits, float("-inf")),
-                    last_logits,
-                )
-
-            if top_p is not None:
-                sorted_logits, sorted_indices = torch.sort(last_logits, descending=True)
-                sorted_probs = F.softmax(sorted_logits, dim=-1)
-                cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-
-                sorted_mask = cumulative_probs > top_p
-                sorted_mask[..., 1:] = sorted_mask[..., :-1].clone()
-                sorted_mask[..., 0] = False
-
-                sorted_logits = torch.where(
-                    sorted_mask,
-                    torch.full_like(sorted_logits, float("-inf")),
-                    sorted_logits,
-                )
-
-                last_logits = torch.zeros_like(last_logits).scatter(
-                    -1, sorted_indices, sorted_logits
-                )
-
-            probs = F.softmax(last_logits, dim=-1)
-            next_token = torch.multinomial(probs, num_samples=1)
-            ### NEW ###
-
+            ########## NEW ##########
             yield int(next_token.item())
+            ########## NEW ##########
+
+            # 新しいトークンを統合し、input_indicesを更新する。
             input_indices = torch.cat((input_indices, next_token), dim=1)
+
+        """DELETE
+        # 最終的な`input_indices`を返す。長さは元の`input_indices`＋`max_new_tokens`
+        return input_indices
+        """
