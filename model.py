@@ -27,17 +27,17 @@ class TokenEmbedding(nn.Module):
 class RelativePositionEmbedding(nn.Module):
     def __init__(self, num_relative_positions: int):
         super().__init__()
-        ############ NEW ############
+        
         self.num_relative_positions = num_relative_positions  # TODO: FILL
         self.bias_embedding_table = nn.Embedding(self.num_relative_positions, 1)  # TODO: FILL
-        ############ NEW ############
+        
 
     def forward(self, query_len, key_len, device_type=None):
         query_positions = torch.arange(query_len, device=device_type)[:, None]  # (query_len, 1)
         key_positions = torch.arange(key_len, device=device_type)[None, :]      # (1, key_len)
         relative_position_matrix = query_positions - key_positions # key_positions - query_positions
 
-        ############ NEW ############
+        
         # 相対距離を範囲 [0, max_distance - 1] に収める（負の距離や過大距離を切り詰め）
         # (query_len, key_len)
         clamped_relative_position_matrix = relative_position_matrix.clamp(
@@ -51,7 +51,7 @@ class RelativePositionEmbedding(nn.Module):
         # 最後の次元を除去して行列化
         # (query_len, key_len)
         relative_position_bias_matrix = relative_position_bias_embeddings.squeeze(-1)  # TODO: FILL
-        ############ NEW ############
+        
 
         return relative_position_bias_matrix
 
@@ -67,9 +67,9 @@ class AttentionHead(nn.Module):
         self.dropout = nn.Dropout(config.dropout_rate)
         self.head_size = head_size
 
-        ########## NEW ##########
+        
         self.relative_position_embedding_layer = RelativePositionEmbedding(num_relative_positions=config.num_relative_positions)
-        ########## NEW ##########
+        
 
     def forward(self, input_tensor):
         B, T, C = input_tensor.shape  # バッチ、トークン長、埋め込みチャネル
@@ -204,7 +204,7 @@ class nanoGPT(nn.Module):
         logits = self.vocab_projection(blocks_output)
 
         # 推論時はターゲットがないため、lossはNoneです
-        # —確率（ロジット）のみ返されます。
+        # 確率（ロジット）のみ返されます。
         if target_indices is None:
             return logits, None
 
