@@ -64,7 +64,7 @@ class AttentionHead(nn.Module):
         self.value_fc = nn.Linear(config.embedding_dim, head_size, bias=False)
 
         # ドロップアウト
-        self.dropout = nn.Dropout(config.dropout_rate)
+        # self.dropout = nn.Dropout(config.dropout_rate)
         self.head_size = head_size
 
         
@@ -93,7 +93,7 @@ class AttentionHead(nn.Module):
 
         # ソフトマックス → ドロップアウト → 重み付き和
         attention_weights = F.softmax(masked_attention_weights, dim=-1)
-        attention_weights = self.dropout(attention_weights)
+        # attention_weights = self.dropout(attention_weights)
 
         out = attention_weights @ Value  # (B, T, head_size)
         return out
@@ -117,7 +117,7 @@ class MultiHeadAttention(nn.Module):
         self.output_projection = nn.Linear(self.embedding_dim, self.embedding_dim)
 
         # 出力のドロップアウト
-        self.dropout = nn.Dropout(config.dropout_rate)
+        # self.dropout = nn.Dropout(config.dropout_rate)
 
     def forward(self, input_tensor):
         # 各ヘッドの出力を取得する
@@ -131,9 +131,9 @@ class MultiHeadAttention(nn.Module):
         projected = self.output_projection.forward(concatenated)
 
         # 最終出力にドロップアウトを適用する
-        output = self.dropout.forward(projected)
+        # output = self.dropout.forward(projected)
 
-        return output
+        return projected
 
 class FeedForward(nn.Module):
     def __init__(self, config):
@@ -142,7 +142,7 @@ class FeedForward(nn.Module):
             nn.Linear(config.embedding_dim, config.hidden_dim),
             nn.ReLU(),
             nn.Linear(config.hidden_dim, config.embedding_dim),
-            nn.Dropout(config.dropout_rate),
+            # nn.Dropout(config.dropout_rate),
         )
 
     def forward(self, input_tensor):
@@ -171,12 +171,18 @@ class TransformerBlock(nn.Module):
         return final_output
 
 class VocabularyLogits(nn.Module):
+    """DELETE
     def __init__(self, vocab_size, config):
+    """
+    def __init__(self, config):
         super().__init__()
         # レイヤー正規化
         self.output_norm = nn.LayerNorm(config.embedding_dim)
         # 語彙数の射影
+        """DELETE
         self.vocab_projection = nn.Linear(config.embedding_dim, vocab_size)
+        """
+        self.vocab_projection = nn.Linear(config.embedding_dim, config.vocab_size)
 
     def forward(self, transformer_block_output):
         # Transformerブロックの出力にLayer normalizationを適用する。
@@ -188,13 +194,22 @@ class VocabularyLogits(nn.Module):
         return vocab_logits
 
 
-class nanoGPT(nn.Module):
+class GPT(nn.Module):
+    """DELETE
     def __init__(self, vocab_size, config):
+    """
+    def __init__(self, config):
         super().__init__()
         self.config = config  # 生成時にも使うので保持してください。
+        """DELETE
         self.token_embedding_layer = TokenEmbedding(vocab_size = vocab_size, embedding_dim = config.embedding_dim)
+        """
+        self.token_embedding_layer = TokenEmbedding(vocab_size = config.vocab_size, embedding_dim = config.embedding_dim)
         self.blocks = nn.Sequential(*[TransformerBlock(config=config) for _ in range(config.layer_count)])
+        """DELETE
         self.vocab_projection = VocabularyLogits(vocab_size=vocab_size, config=config)
+        """
+        self.vocab_projection = VocabularyLogits(config=config)
         self.criterion = nn.CrossEntropyLoss()
 
     # 尤度と損失を計算する

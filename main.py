@@ -28,10 +28,13 @@ def main():
         lr=config.max_learning_rate,
         betas=(0.9, 0.95),
         weight_decay=0.1,
+        ########## NEW ##########
+        fused=True,  # Use fused AdamW if available for better performance. Requires PyTorch 2.0+ and compatible hardware.
+        ########## NEW ##########
     )
 
     # DataLoader
-    data_dir = os.environ.get("DATA_DIR", "/home/ubuntu/YOURFILESYSTEM") # ex: /home/ubuntu/virginia-filesystem
+    data_dir = os.environ.get("DATA_DIR", "/home/ubuntu/washington-filesystem") # ex: /home/ubuntu/virginia-filesystem
     data_loader = DataLoader(data_dir=data_dir, config=config)
 
     checkpoint_dir = os.environ.get("CKPT_DIR", "./checkpoints")

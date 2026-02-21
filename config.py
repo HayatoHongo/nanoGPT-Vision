@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class ModelConfig:
     # === training ===
     # Single-device setup: global batch size == batch_size
-    batch_size: int = 48 # 16 is equivalent to about 25 GB VRAM usage. 
+    batch_size: int = 16 # 16 is equivalent to about 25 GB VRAM usage. 
     total_training_steps: int = 200_000
     evaluation_frequency: int = 100
     checkpoint_save_frequency: int = 10_000
@@ -20,8 +20,13 @@ class ModelConfig:
     hidden_dim: int = 5120 # 1536
     num_attention_heads: int = 10 # 6
     layer_count: int = 20
+    """DELETE
     rope_theta: float = 1_000_000.0
+    """
+    ### NEW ###
+    num_relative_positions = 256
     vocab_size: int = 50257
+    ### NEW ###
 
     # === optimization ===
     # The learning rate is VERY important. You can tune it, but that takes time, money, and a bit of your sanity.
